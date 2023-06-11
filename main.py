@@ -19,7 +19,7 @@ load_dotenv()
 app = Flask(__name__)   
 
 
-cred = credentials.Certificate('key.json')  # Replace with your own service account key file path
+cred = credentials.Certificate('https://storage.googleapis.com/fundup-387016/key.json')  # Replace with your own service account key file path
 
 
 # Initialize Firestore
