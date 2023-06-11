@@ -16,7 +16,7 @@ from flask_cors import CORS
 # Load environment variables from .env file
 load_dotenv()
 # Initialize Flask application
-app = Flask(__name__)
+app = Flask(__name__)   
 
 
 cred = credentials.Certificate('key.json')  # Replace with your own service account key file path
@@ -26,9 +26,8 @@ cred = credentials.Certificate('key.json')  # Replace with your own service acco
 firebase_admin.initialize_app(cred)
 db = firestore.client()
 
-    
 
-@app.route('/user/recommendation', methods=['POST'])
+@app.route('/get-recommendation', methods=['POST'])
 def get_recomendation_for_startup():
     # Get the id_token from the request (assuming it's provided in the request)
     id_token = request.json.get('id_token')
@@ -124,4 +123,4 @@ def get_recomendation_for_startup():
 
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+    app.run(port=5000)
