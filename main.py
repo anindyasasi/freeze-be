@@ -19,12 +19,98 @@ load_dotenv()
 app = Flask(__name__)   
 
 
-cred = credentials.Certificate('./key.json')  # Replace with your own service account key file path
+cred = credentials.Certificate('cred_json')  # Replace with your own service account key file path
 
 
 # Initialize Firestore
 firebase_admin.initialize_app(cred)
 db = firestore.client()
+
+
+
+        
+@app.route('/startup', methods=['POST'])
+def add_startup():
+    data = request.get_json()
+    tingkat_perkembangan_perusahaan = data['tingkatperkembanganperusahaan']
+    industri_startup = data['industristartup']
+    nama_startup = data['namastartup']
+    email_startup = data['emailstartup']
+    
+    startup_data = {
+        'tingkat_perkembangan_perusahaan': tingkat_perkembangan_perusahaan,
+        'industri_startup': industri_startup,
+        'nama_startup': nama_startup,
+        'email_startup': email_startup
+    }
+    
+    try:
+        # Add startup data to Firestore
+        startup_ref = db.collection('startup')
+        doc_ref = startup_ref.document()
+        doc_ref.set(startup_data)
+        
+        # Initialize investor_features_ref
+        investor_features_ref = db.collection('investor_loker')
+        def addRecStartup(startup_features_ref, investor_features_ref):
+            startup_features_docs = startup_features_ref.stream()
+            
+            startup_features = []
+            startup_ids = []
+            for doc in startup_features_docs:
+                data = doc.to_dict()
+                startup_features.append(data['tingkat_perkembangan_perusahaan'] + ' ' + data['industri_startup'])
+                startup_ids.append(str(doc.id))
+            
+            investor_features_docs = investor_features_ref.stream()
+            
+            investor_features = []
+            investor_ids = []
+            for doc in investor_features_docs:
+                data = doc.to_dict()
+                investor_features.append(data['target_perkembangan'] + ' ' + data['target_industri'])
+                investor_ids.append(doc.id)
+            
+            tokenizer = Tokenizer()
+            tokenizer.fit_on_texts(startup_features + investor_features)
+            startup_sequences = tokenizer.texts_to_sequences(startup_features)
+            startup_padded = pad_sequences(startup_sequences)
+            
+            investor_sequences = tokenizer.texts_to_sequences(investor_features)
+            investor_padded = pad_sequences(investor_sequences)
+            
+            # Convert padded sequences to tensors
+            startup_tensors = tf.convert_to_tensor(startup_padded, dtype=tf.float32)
+            investor_tensors = tf.convert_to_tensor(investor_padded, dtype=tf.float32)
+            
+            # Calculate cosine similarity between startup and investor tensors
+            similarity_matrix = cosine_similarity(startup_tensors, investor_tensors)
+            
+            def get_investor_matches(startup_id):
+                matches = {}
+                startup_index = startup_ids.index(startup_id)
+                similarities = similarity_matrix[startup_index]
+                sorted_indexes = np.argsort(similarities)[::-1]
+                top_matches = [investor_ids[i] for i in sorted_indexes[:20]]
+                matches[startup_id] = top_matches
+                return matches
+            
+            # Add investor matches to Firestore collection
+            def add_investor_matches(startup_id, investor_matches):
+                matches_ref = db.collection('investor_matches')
+                matches_ref.document(startup_id).set({ 'investor_matches': investor_matches })
+            
+            for id in startup_ids:
+                input_id = id
+                investor_matches = get_investor_matches(input_id)
+                add_investor_matches(input_id, investor_matches[input_id])
+
+        addRecStartup(startup_ref, investor_features_ref)
+        
+        return jsonify({'message': 'Startup data added successfully'})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 
 
 @app.route('/get-recommendation', methods=['POST'])
