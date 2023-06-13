@@ -1,34 +1,17 @@
-FROM python:3.9.6
+FROM python:3.10
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
-    build-essential \
-    libpq-dev
+WORKDIR /fundup
 
-# Copy local code to the container image.
-ENV APP_HOME /app
-WORKDIR $APP_HOME
-COPY . ./
+RUN apt-get update
 
-# Download the key.json file using wget
-#RUN apt-get update && apt-get install -y wget
-#RUN wget $JSON_KEY
+RUN apt install -y libgl1-mesa-glx
 
-# Allow statements and log messages to immediately appear in the logs
-ENV PYTHONUNBUFFERED True
+COPY requirements.txt .
 
-# Install Python dependencies
-COPY requirements.txt requirements.txt
-RUN pip3 install --no-cache-dir  -r requirements.txt
+RUN pip install -r requirements.txt
 
-# Copy the key.json file to the working directory
-# COPY key.json .
+COPY . ./app
 
-# Copy the application code
-COPY . .
+EXPOSE 5000
 
-ARG KEY_JSON
-ENV KEY_JSON=$KEY_JSON
-
-ENV PORT 5000
-CMD exec gunicorn --bind :$PORT main:app --workers 1 --threads 1 --timeout 60
+CMD ["python", "./app/main.py"]
