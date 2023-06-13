@@ -13,6 +13,7 @@ cryptography==41.0.1
 ecdsa==0.13
 firebase-admin==6.1.0
 Flask==2.3.2
+Flask-Cors==3.0.10
 flatbuffers==23.5.26
 gast==0.4.0
 google-api-core==2.11.0
