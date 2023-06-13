@@ -9,8 +9,6 @@ from tensorflow.keras.preprocessing.text import Tokenizer
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 from sklearn.metrics.pairwise import cosine_similarity
 import os 
-from functools import wraps
-from flask_cors import CORS
 
 
 # Initialize Flask application
