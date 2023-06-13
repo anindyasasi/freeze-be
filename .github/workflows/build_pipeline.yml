@@ -11,30 +11,7 @@ env:
 
 jobs:
   job1:
-    name: Build
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
-
-      - name: Switch to Current Branch
-        run: git checkout ${{ env.BRANCH }}
-
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v1
-        with:
-          python-version: ${{ matrix.python-version }}
-
-      - name: Install dependencies
-        run: |
-          python3 -m pip install --upgrade pip
-          pip install -r requirements.txt
-
-  job2:
     name: Deliver Artifact
-    needs: job1
     runs-on: ubuntu-latest
     steps:
       - name: Check out the repo
